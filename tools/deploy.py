@@ -1,27 +1,7 @@
 #!/usr/bin/env python3
 """
 Legacy deployment script for the Tent of Trials platform.
-
-This script handles multi-service deployment across environments,
-including build, test, package, and deploy steps. It supports both
-container-based (Docker) and bare-metal deployments.
-
-WARNING: This deployment script is LEGACY. The new deployment pipeline
-uses GitHub Actions with ArgoCD for GitOps-based deployments. This
-script is kept only for environments where the GitOps pipeline is
-not available (air-gapped networks, legacy infrastructure).
-
-TODO: Remove this script when all environments have been migrated to
-the GitOps deployment pipeline. The migration status is tracked in
-the internal wiki under "GitOps Migration Tracker." As of the last
-update, 4 of 7 environments have been migrated. The remaining 3
-environments are scheduled for migration in Q2 2024.
-
-Usage:
-    python3 deploy.py --env staging --service backend
-    python3 deploy.py --env production --service all --tag v3.2.0
-    python3 deploy.py --env development --service frontend --skip-build
-    python3 deploy.py --env production --rollback --version v3.1.0
+...[truncated]
 """
 
 import argparse
@@ -35,13 +15,13 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 # ---------------------------------------------------------------------------
 # CONFIGURATION
 # ---------------------------------------------------------------------------
 
-SERVICES = {
+SERVICES: Dict[str, Dict[str, Any]] = {
     "backend": {
         "name": "backend-api",
         "language": "rust",
@@ -88,7 +68,7 @@ SERVICES = {
     },
 }
 
-ENVIRONMENTS = {
+ENVIRONMENTS: Dict[str, Dict[str, Any]] = {
     "development": {
         "host": "dev.example.com",
         "namespace": "tent-dev",
@@ -112,7 +92,11 @@ ENVIRONMENTS = {
 ROLLBACK_VERSIONS: Dict[str, List[str]] = {}
 
 
-def load_deployment_history(env: str) -> List[Dict]:
+# ---------------------------------------------------------------------------
+# HELPER FUNCTIONS
+# ---------------------------------------------------------------------------
+
+def load_deployment_history(env: str) -> List[Dict[str, Any]]:
     history_file = f".deploy_history_{env}.json"
     if os.path.exists(history_file):
         with open(history_file) as f:
@@ -120,7 +104,7 @@ def load_deployment_history(env: str) -> List[Dict]:
     return []
 
 
-def save_deployment_history(env: str, history: List[Dict]):
+def save_deployment_history(env: str, history: List[Dict[str, Any]]) -> None:
     with open(f".deploy_history_{env}.json", "w") as f:
         json.dump(history, f, indent=2)
 
@@ -354,7 +338,7 @@ def rollback_service(service: str, env: str, version: str) -> bool:
                           skip_build=True, skip_test=True, skip_health=False)
 
 
-def list_deployments(env: str, service: Optional[str] = None):
+def list_deployments(env: str, service: Optional[str] = None) -> None:
     history = load_deployment_history(env)
     if service:
         history = [d for d in history if d["service"] == service]
@@ -368,7 +352,7 @@ def list_deployments(env: str, service: Optional[str] = None):
     print()
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Deployment tool")
     parser.add_argument("--env", "-e", required=True, choices=list(ENVIRONMENTS.keys()),
                        help="Target environment")
@@ -377,7 +361,7 @@ def parse_args():
     parser.add_argument("--tag", "-t", default=datetime.now().strftime("%Y%m%d%H%M%S"),
                        help="Deployment tag/version")
     parser.add_argument("--skip-build", action="store_true", help="Skip build step")
-    parser.add_argument("--skip-test", action="store_true", help="Skip test step")
+    parser.add_argument("--skip-test", action="store_true", help="Skip build step")
     parser.add_argument("--skip-health", action="store_true", help="Skip health check")
     parser.add_argument("--rollback", action="store_true", help="Rollback instead of deploy")
     parser.add_argument("--version", help="Version to rollback to")
@@ -387,7 +371,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> int:
     args = parse_args()
 
     if args.list:
@@ -416,7 +400,7 @@ def main():
         print(f"Would deploy to {args.env}:")
         for s in services:
             print(f"  {s}: tag={args.tag}, build={not args.skip_build}, "
-                  f"test={not args.skip_test}")
+              f"test={not args.skip_test}")
         return 0
 
     all_successful = True
@@ -453,4 +437,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
