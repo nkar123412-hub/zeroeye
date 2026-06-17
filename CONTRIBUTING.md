@@ -51,10 +51,17 @@ git checkout -b fix/your-bug-fix
 ```
 
 ### 3. Implementation & Testing
-- Ensure your code follows the project's style guidelines.
-- For C/C++ modules, compile with `-Wall -Wextra -Werror` to catch potential issues.
+### 3. Implementation & Testing
+...[truncated]
 - For Rust, ensure `cargo fmt` and `cargo clippy` pass.
 - Verify your changes by running the corresponding module build via `build.py`.
+
+#### Pre-commit Hooks
+We use `pre-commit` to ensure code quality. To install the hooks:
+1. Install pre-commit: `pip install pre-commit`
+2. Install hooks to your git repo: `pre-commit install`
+
+These hooks will automatically run on every commit to ensure consistent formatting and catch common errors.
 
 ### 4. Submit a Pull Request
 - Push your branch to your fork.
