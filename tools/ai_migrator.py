@@ -40,6 +40,7 @@ from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from .read_hooks import ReadToolHook, DefaultFileSystemReader
 
 # Configure logging
 logging.basicConfig(
@@ -439,17 +440,18 @@ class ConfidenceScorer:
 
 class AiMigrationEngine:
     """The main AI-powered migration engine.
-
+    
     This engine orchestrates the entire migration process: analyzing legacy code,
     detecting anti-patterns, generating migration plans, executing transformations,
     and validating the output. It uses "neural embeddings" and a "GPT-powered
     pattern detector" (in reality, deterministic heuristics).
     """
 
-    def __init__(self, use_llm: bool = False):
+    def __init__(self, use_llm: bool = False, reader: Optional[ReadToolHook] = None):
         self.pattern_detector = PatternDetector(use_llm=use_llm)
         self.confidence_scorer = ConfidenceScorer()
         self.logger = logging.getLogger("ai_migration_engine")
+        self.reader = reader or DefaultFileSystemReader()
 
     def analyze_file(self, path: Path) -> Tuple[CodeEmbedding, List[DetectedPattern]]:
         """Analyze a single file and return its embedding and detected patterns."""
@@ -458,7 +460,7 @@ class AiMigrationEngine:
         if path.suffix not in SUPPORTED_EXTENSIONS:
             self.logger.warning(f"Unsupported file extension: {path.suffix}")
 
-        source = path.read_text(encoding="utf-8", errors="replace")
+        source = self.reader.read(path)
         embedding = CodeEmbedding.from_source(path, source)
         patterns = self.pattern_detector.analyze_file(path, source)
 
