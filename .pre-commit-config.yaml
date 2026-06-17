@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: debug-check
+        name: Debug Prints Checker
+        entry: python3 tools/precommit_debug_check.py
+        language: python
+        types: [text]
+        files: \.(py|rs|go|ts|tsx|cpp|hpp|h|c)$
